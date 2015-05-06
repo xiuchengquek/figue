@@ -70,6 +70,9 @@ body {
 
 
 <script type="text/javascript" src="figue.js"></script>
+<script type="text/javascript" src="lib/jquery-2.0.3.min.js"></script>
+<script type="text/javascript" src="lib/kinetic-v5.1.0.min.js"></script>
+<script type="text/javascript" src="lib/inchlib-1.2.0.js"></script>
 
 
 <script type="text/javascript">
@@ -109,6 +112,7 @@ function runAlgo() {
 		case 'kmeans': { runKM() ; break ; }
 		case 'hierarchical': { runHC() ; break ; }
 		case 'fcmeans': { runFCM() ; break ; }
+        case 'inchlib' : { runChlib(); break;}
 	}
 	document.getElementById('output_panel').style.display = 'block' ;
 } 
@@ -155,6 +159,28 @@ function runKM() {
   document.getElementById('text').innerHTML = txt; 
 }
 
+
+function flattenTree(tree, lines) {
+    if (tree.isLeaf()){
+
+        lines[tree.id] = {'count' : tree.size, 'features'  : tree.centroid, 'parent' : tree['parent'], objects : ['object_id'], 'distance' : 0};
+
+
+        //lines.push({'gene' : tree.label, 'expression'  : tree.centroid})
+    }
+    else {
+
+        
+        lines[tree.id] = { 'count' :  tree.size, 'distance' : tree.dist,
+            'left_child' : tree.left.id, 'right_child' : tree.right.id};
+        //lines.push(node);
+
+        flattenTree(tree.left, lines);
+        flattenTree(tree.right, lines);
+    }
+    return lines;
+};
+
 function runHC() {
 	var data = parseData (document.getElementById('data').value) ;
 	var domobj = document.getElementById('space') ;
@@ -199,12 +225,65 @@ function runFCM() {
   document.getElementById('text').innerHTML = txt; 
 }
 
+
+function runChlib () {
+
+  	var data = parseData (document.getElementById('data').value) ;
+    var linkage = parseInt (radioValue('linkage')) ;
+	var distance = parseInt (radioValue('distance')) ;
+	root = figue.agglomerate(data['labels'], data['vectors'] , distance, linkage) ;
+    var results = flattenTree(root, {})
+    var results2 = flattenTree(root, {})
+
+
+    var inchlibData = {'data': {'nodes' : {}}, 'column_dendrogram' : {'nodes': {}}};
+
+    inchlibData['data']['nodes'] = results;
+    inchlibData['column_dendrogram']['nodes'] = results2;
+
+
+    console.log(inchlibData)
+
+    var inc = new InCHlib({
+
+        target: 'inchlib',
+        metadata: false,
+        column_metadata: false,
+        max_height: 2000,
+        width: 300,
+        heatmap_colors: "Greens"
+    });
+
+    inc.read_data(inchlibData)
+
+    console.log(inc)
+    inc.events.row_onclick = function(objid, nid, evt){
+
+        console.log(objid[0], nid, evt)
+
+    }
+    inc.draw()
+
+
+
+
+
+
+}
+
+
+
+
 function radioValue(name) {
 	var radios = document.getElementsByName(name) ;
 	for (var i = 0 ; i < radios.length ; i++) 
 		if (radios[i].checked) 
 			return radios[i].value ;
 }
+
+
+
+
 
 var datasets = {
 	'people': "anna,37,2\nkarin,65,3\njohn,34,2\ntom,38,5\nmarc,38,6\nstephany,38,3\n" ,
@@ -222,6 +301,7 @@ window.onload = function() {
 </head>
 
 <body>
+<div id="inchlib">asd</div>
 
 
 <div id="input_panel">
@@ -250,6 +330,10 @@ Or use an existing dataset:
 <option value="hierarchical" selected>Hierarchical clustering</option>
 <option value="kmeans">K-means</option>
 <option value="fcmeans">Fuzzy C-means (Experimental)</option>
+<option value="inchlib">chlib (Experimental)</option>
+
+
+
 </select>
 </fieldset>
 </div>
@@ -350,6 +434,7 @@ Minimum spacing between nodes:
 <pre id="text"> </pre>
 </fieldset>
 </div>
+
 
 </body>
 

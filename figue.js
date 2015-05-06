@@ -232,7 +232,8 @@ var figue = function () {
 		// create leaves of the tree
 		for (i = 0 ; i < N ; i++) {
 			clusters[i] = [] ;
-			clusters[i][0] = new Node (labels[i], null, null, 0, vectors[i]) ;
+            //each leaf will have an id
+			clusters[i][0] = new Node (labels[i], null, null, 0, vectors[i], i) ;
 			cSize[i] = 1 ;
 		}
 		
@@ -250,8 +251,14 @@ var figue = function () {
 			c1Cluster = clusters[c1][0] ;
 			c2Cluster = clusters[c2][0] ;
 
+            // gives each node a id with a 'p' prefix
+            var node_id = 'p' + p;
 			newCentroid = calculateCentroid ( c1Cluster.size , c1Cluster.centroid , c2Cluster.size , c2Cluster.centroid ) ;
-			newCluster = new Node (-1, c1Cluster, c2Cluster , distMatrix[c1][c2] , newCentroid) ;
+			newCluster = new Node (-1, c1Cluster, c2Cluster , distMatrix[c1][c2] , newCentroid, node_id) ;
+
+            c1Cluster.addparent(node_id);
+            c2Cluster.addparent(node_id);
+
 			clusters[c1].splice(0,0, newCluster) ;
 			cSize[c1] += cSize[c2] ;
 		
@@ -504,10 +511,12 @@ var figue = function () {
 		}
 	}
 
-	function Node (label,left,right,dist, centroid) 
+	function Node (label,left,right,dist, centroid, id)
 	{
 		this.label = label ;
 		this.left = left ;
+        this.id = id;
+        this.parent;
 		this.right = right ;
 		this.dist = dist ;
 		this.centroid = centroid ;
@@ -567,6 +576,14 @@ figue.Node.prototype.isLeaf = function()
 	else
 		return false ;
 }
+
+figue.Node.prototype.addparent = function(parent)
+{
+	this.parent = parent
+}
+
+
+
 
 figue.Node.prototype.buildDendogram = function (sep, balanced,withLabel,withCentroid, withDistance)
 {
