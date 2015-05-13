@@ -143,6 +143,7 @@ function runKM() {
 	var domobj = document.getElementById('KM-K') ;
 	var K = parseInt (domobj.options[domobj.selectedIndex].value) ;
   	var clusters = figue.kmeans(K , vectors);
+    console.log(clusters)
 	
 	var txt ;
 	if (clusters) {
